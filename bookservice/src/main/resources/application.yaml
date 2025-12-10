@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: bookservice
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/bookdb
+    username: postgres
+    password: admin
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+# Логи
+logging:
+  level:
+    root: INFO
