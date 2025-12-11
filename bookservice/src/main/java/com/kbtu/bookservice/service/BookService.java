@@ -4,7 +4,6 @@ import com.kbtu.bookservice.entity.Book;
 
 import java.util.List;
 
-
 public interface BookService {
 
     Book create(Book book);

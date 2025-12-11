@@ -19,7 +19,7 @@ public class Book {
 
     public enum Status {
         AVAILABLE,
-        BORROWED
+        BORROWED,
     }
 
     // --- Геттеры и сеттеры ---

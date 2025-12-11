@@ -1,20 +1,25 @@
 package com.kbtu.bookservice.service.impl;
 
 import com.kbtu.bookservice.entity.Book;
+import com.kbtu.bookservice.entity.BookHistory;
+import com.kbtu.bookservice.repository.BookHistoryRepository;
 import com.kbtu.bookservice.repository.BookRepository;
 import com.kbtu.bookservice.service.BookService;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 public class BookServiceImpl implements BookService {
 
     private final BookRepository bookRepository;
+    private final BookHistoryRepository bookHistoryRepository;
 
-    // --- Конструктор для внедрения зависимости ---
-    public BookServiceImpl(BookRepository bookRepository) {
+    // Единственный правильный конструктор
+    public BookServiceImpl(BookRepository bookRepository, BookHistoryRepository bookHistoryRepository) {
         this.bookRepository = bookRepository;
+        this.bookHistoryRepository = bookHistoryRepository;
     }
 
     @Override
@@ -53,20 +58,46 @@ public class BookServiceImpl implements BookService {
     @Override
     public Book borrowBook(Long id, String username) {
         Book book = getById(id);
-        if (book.getStatus() == Book.Status.BORROWED) {
-            throw new RuntimeException("Book already borrowed");
+
+        if (book.getStatus() != Book.Status.AVAILABLE) {
+            throw new RuntimeException("Book is not available");
         }
+
         book.setStatus(Book.Status.BORROWED);
-        return bookRepository.save(book);
+        bookRepository.save(book);
+
+        BookHistory history = new BookHistory();
+        history.setBook(book);
+        history.setFromUser("Library");
+        history.setToUser(username);
+        history.setGivenAt(LocalDateTime.now());
+        history.setStatus(Book.Status.BORROWED);
+
+        bookHistoryRepository.save(history);
+
+        return book;
     }
 
     @Override
     public Book returnBook(Long id, String username) {
         Book book = getById(id);
-        if (book.getStatus() == Book.Status.AVAILABLE) {
+
+        if (book.getStatus() != Book.Status.BORROWED) {
             throw new RuntimeException("Book is not borrowed");
         }
+
         book.setStatus(Book.Status.AVAILABLE);
-        return bookRepository.save(book);
+        bookRepository.save(book);
+
+        BookHistory history = bookHistoryRepository
+                .findTopByBookIdAndToUserOrderByGivenAtDesc(id, username)
+                .orElseThrow(() -> new RuntimeException("History entry not found"));
+
+        history.setReturnedAt(LocalDateTime.now());
+        history.setStatus(Book.Status.AVAILABLE);
+
+        bookHistoryRepository.save(history);
+
+        return book;
     }
 }
