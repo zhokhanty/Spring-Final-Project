@@ -3,6 +3,8 @@ package com.kbtu.bookservice.controller;
 import com.kbtu.bookservice.dto.BookCreateRequest;
 import com.kbtu.bookservice.dto.BookResponse;
 import com.kbtu.bookservice.entity.Book;
+import com.kbtu.bookservice.event.BookBorrowedEvent;
+import com.kbtu.bookservice.kafka.KafkaProducerService;
 import com.kbtu.bookservice.service.BookService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,9 +21,11 @@ import java.util.List;
 public class BookController {
 
     private final BookService bookService;
+    private final KafkaProducerService kafkaProducerService;
     // Spring внедрит бины BookService и KafkaProducerService
-    public BookController(BookService bookService) {
+    public BookController(BookService bookService, KafkaProducerService kafkaProducerService) {
         this.bookService = bookService;
+        this.kafkaProducerService = kafkaProducerService;
     }
 
     @PostMapping
@@ -60,8 +64,17 @@ public class BookController {
 
     @PostMapping("/{id}/borrow")
     public Book borrow(@PathVariable Long id, @RequestParam String username) {
-        Book borrowedBook = bookService.borrowBook(id, username);
-        return bookService.borrowBook(id, username);
+
+        Book book = bookService.borrowBook(id, username);
+
+        BookBorrowedEvent event = new BookBorrowedEvent(
+                book.getId(),
+                username
+        );
+
+        kafkaProducerService.sendBookBorrowedEvent(event);
+
+        return book;
     }
 
     @PostMapping("/{id}/return")
