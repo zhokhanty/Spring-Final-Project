@@ -18,6 +18,7 @@
         <module>api-contracts</module>
         <module>bookservice</module>
         <module>notification-service</module>
+        <module>userservice</module>
     </modules>
 
     <properties>
