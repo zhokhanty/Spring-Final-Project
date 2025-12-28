@@ -3,7 +3,7 @@ package com.kbtu.bookservice.controller;
 import com.kbtu.bookservice.dto.BookCreateRequest;
 import com.kbtu.bookservice.dto.BookResponse;
 import com.kbtu.bookservice.entity.Book;
-import com.kbtu.bookservice.event.BookBorrowedEvent;
+import com.kbtu.api.contracts.event.BookBorrowedEvent;
 import com.kbtu.bookservice.kafka.KafkaProducerService;
 import com.kbtu.bookservice.service.BookService;
 import jakarta.validation.Valid;

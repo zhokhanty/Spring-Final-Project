@@ -1,5 +1,4 @@
-package com.kbtu.bookservice.event;
-
+package com.kbtu.api.contracts.event;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
