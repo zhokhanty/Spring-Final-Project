@@ -3,9 +3,11 @@ package com.kbtu.userservice.service;
 import com.kbtu.userservice.dto.UserDTO;
 import com.kbtu.userservice.entity.User;
 import com.kbtu.userservice.exception.ResourceNotFoundException;
-import com.kbtu.userservice.exception.UserAlreadyExistsException;
 import com.kbtu.userservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
@@ -16,20 +18,41 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    @Transactional
-    public User createUser(UserDTO userDTO) {
-        if (userRepository.existsByEmail(userDTO.getEmail())) {
-            throw new UserAlreadyExistsException("User with email " + userDTO.getEmail() + " already exists");
+    public String getCurrentUserKeycloakId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof Jwt jwt) {
+            return jwt.getSubject();
         }
+        throw new RuntimeException("Unable to get current user");
+    }
 
-        User user = new User();
-        user.setEmail(userDTO.getEmail());
-        user.setPassword(userDTO.getPassword()); // В продакшене нужно хешировать
-        user.setFirstName(userDTO.getFirstName());
-        user.setLastName(userDTO.getLastName());
-        user.setActive(true);
+    @Transactional
+    public User syncUserFromKeycloak() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication.getPrincipal() instanceof Jwt jwt) {
+            String keycloakId = jwt.getSubject();
+            String email = jwt.getClaim("email");
+            String firstName = jwt.getClaim("given_name");
+            String lastName = jwt.getClaim("family_name");
 
-        return userRepository.save(user);
+            return userRepository.findByKeycloakId(keycloakId)
+                    .map(user -> {
+                        user.setEmail(email);
+                        user.setFirstName(firstName);
+                        user.setLastName(lastName);
+                        return userRepository.save(user);
+                    })
+                    .orElseGet(() -> {
+                        User newUser = new User();
+                        newUser.setKeycloakId(keycloakId);
+                        newUser.setEmail(email);
+                        newUser.setFirstName(firstName);
+                        newUser.setLastName(lastName);
+                        newUser.setActive(true);
+                        return userRepository.save(newUser);
+                    });
+        }
+        throw new RuntimeException("No JWT token found");
     }
 
     public User getUserById(Long id) {
@@ -46,24 +69,10 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    @Transactional
-    public User updateUser(Long id, UserDTO userDTO) {
-        User user = getUserById(id);
-
-        if (!user.getEmail().equals(userDTO.getEmail()) &&
-                userRepository.existsByEmail(userDTO.getEmail())) {
-            throw new UserAlreadyExistsException("Email already in use");
-        }
-
-        user.setEmail(userDTO.getEmail());
-        user.setFirstName(userDTO.getFirstName());
-        user.setLastName(userDTO.getLastName());
-
-        if (userDTO.getPassword() != null && !userDTO.getPassword().isEmpty()) {
-            user.setPassword(userDTO.getPassword());
-        }
-
-        return userRepository.save(user);
+    public User getCurrentUser() {
+        String keycloakId = getCurrentUserKeycloakId();
+        return userRepository.findByKeycloakId(keycloakId)
+                .orElseThrow(() -> new ResourceNotFoundException("Current user not found"));
     }
 
     @Transactional

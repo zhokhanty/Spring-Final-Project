@@ -1,12 +1,11 @@
 package com.kbtu.userservice.controller;
 
-import com.kbtu.userservice.dto.UserDTO;
 import com.kbtu.userservice.entity.User;
 import com.kbtu.userservice.service.UserService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -17,39 +16,28 @@ public class UserController {
 
     private final UserService userService;
 
-    @PostMapping
-    public ResponseEntity<User> createUser(@Valid @RequestBody UserDTO userDTO) {
-        User user = userService.createUser(userDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(user);
+    @GetMapping("/me")
+    public ResponseEntity<User> getCurrentUser() {
+        User user = userService.syncUserFromKeycloak();
+        return ResponseEntity.ok(user);
+    }
+
+    @GetMapping("/me/info")
+    public ResponseEntity<?> getUserInfo(Authentication authentication) {
+        return ResponseEntity.ok(authentication.getPrincipal());
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<User> getUserById(@PathVariable Long id) {
         User user = userService.getUserById(id);
         return ResponseEntity.ok(user);
     }
 
-    @GetMapping("/email/{email}")
-    public ResponseEntity<User> getUserByEmail(@PathVariable String email) {
-        User user = userService.getUserByEmail(email);
-        return ResponseEntity.ok(user);
-    }
-
     @GetMapping
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     public ResponseEntity<List<User>> getAllUsers() {
         List<User> users = userService.getAllUsers();
         return ResponseEntity.ok(users);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Long id, @Valid @RequestBody UserDTO userDTO) {
-        User user = userService.updateUser(id, userDTO);
-        return ResponseEntity.ok(user);
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        userService.deleteUser(id);
-        return ResponseEntity.noContent().build();
     }
 }
