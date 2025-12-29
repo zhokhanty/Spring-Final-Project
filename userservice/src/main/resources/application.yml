@@ -1,0 +1,35 @@
+server:
+  port: 8081  # Порт для bookservice (измените, если нужно)
+
+spring:
+  application:
+    name: bookservice
+
+  datasource:
+    # Замените localhost:5432/postgres на ваши данные
+    url: jdbc:postgresql://localhost:5432/userdb
+    username: postgres
+    password: admin
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  kafka:
+    bootstrap-servers: kafka:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+# Настройки Swagger (springdoc)
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
