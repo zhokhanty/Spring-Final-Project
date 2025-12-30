@@ -3,82 +3,39 @@ package com.kbtu.bookservice.controller;
 import com.kbtu.bookservice.dto.BookCreateRequest;
 import com.kbtu.bookservice.dto.BookResponse;
 import com.kbtu.bookservice.entity.Book;
-import com.kbtu.api.contracts.event.BookBorrowedEvent;
-import com.kbtu.bookservice.kafka.KafkaProducerService;
 import com.kbtu.bookservice.service.BookService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
-import java.util.List;
 @RestController
 @RequestMapping("/api/books")
-@Tag(name = "Books API", description = "CRUD operations for books")
+@RequiredArgsConstructor
 public class BookController {
 
     private final BookService bookService;
-    private final KafkaProducerService kafkaProducerService;
-    // Spring внедрит бины BookService и KafkaProducerService
-    public BookController(BookService bookService, KafkaProducerService kafkaProducerService) {
-        this.bookService = bookService;
-        this.kafkaProducerService = kafkaProducerService;
-    }
 
     @PostMapping
-    @Operation(summary = "Create a new book")
-    public BookResponse createBook(@Valid @RequestBody BookCreateRequest request) {
-        // Сохраняем книгу
-        Book book = new Book();
-        book.setTitle(request.getTitle());
-        book.setAuthor(request.getAuthor());
-        book.setYear(request.getYear());
-        book.setStatus(Book.Status.AVAILABLE);
+    public BookResponse create(@Valid @RequestBody BookCreateRequest request) {
 
-        Book saved = bookService.create(book);
-        return new BookResponse(saved);
-    }
+        Book book = Book.create(
+                request.getTitle(),
+                request.getAuthor(),
+                request.getPublishYear()
+        );
 
-    @GetMapping
-    public List<Book> getAll() {
-        return bookService.getAll();
-    }
-
-    @GetMapping("/{id}")
-    public Book getById(@PathVariable Long id) {
-        return bookService.getById(id);
-    }
-
-    @PutMapping("/{id}")
-    public Book update(@PathVariable Long id, @RequestBody Book book) {
-        return bookService.update(id, book);
-    }
-
-    @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
-        bookService.delete(id);
+        return new BookResponse(bookService.create(book));
     }
 
     @PostMapping("/{id}/borrow")
-    public Book borrow(@PathVariable Long id, @RequestParam String username) {
-
-        Book book = bookService.borrowBook(id, username);
-
-        BookBorrowedEvent event = new BookBorrowedEvent(
-                book.getId(),
-                username
-        );
-
-        kafkaProducerService.sendBookBorrowedEvent(event);
-
-        return book;
+    public BookResponse borrow(@PathVariable Long id,
+                               @RequestParam String username) {
+        return new BookResponse(bookService.borrowBook(id, username));
     }
 
     @PostMapping("/{id}/return")
-    public Book returnBook(@PathVariable Long id, @RequestParam String username) {
-        return bookService.returnBook(id, username);
+    public BookResponse returnBook(@PathVariable Long id,
+                                   @RequestParam String username) {
+        return new BookResponse(bookService.returnBook(id, username));
     }
 }
