@@ -1,65 +1,60 @@
 package com.kbtu.bookservice.entity;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "books")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Book {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String title;
+
+    @Column(nullable = false)
     private String author;
-    private int year;
+
+    @Column(name = "publish_year", nullable = false)
+    private Integer publishYear;
 
     @Enumerated(EnumType.STRING)
-    private Status status = Status.AVAILABLE;
+    @Column(nullable = false)
+    private Status status;
 
     public enum Status {
         AVAILABLE,
-        BORROWED,
+        BORROWED
     }
 
-    // --- Геттеры и сеттеры ---
-    public Long getId() {
-        return id;
+    // FACTORY
+    public static Book create(String title, String author, Integer publishYear) {
+        Book book = new Book();
+        book.title = title;
+        book.author = author;
+        book.publishYear = publishYear;
+        book.status = Status.AVAILABLE;
+        return book;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
+    // DOMAIN METHODS
+    public void updateInfo(String title, String author, Integer publishYear) {
         this.title = title;
-    }
-
-    public String getAuthor() {
-        return author;
-    }
-
-    public void setAuthor(String author) {
         this.author = author;
+        this.publishYear = publishYear;
     }
 
-    public int getYear() {
-        return year;
+    public void markBorrowed() {
+        this.status = Status.BORROWED;
     }
 
-    public void setYear(int year) {
-        this.year = year;
-    }
-
-    public Status getStatus() {
-        return status;
-    }
-
-    public void setStatus(Status status) {
-        this.status = status;
+    public void markReturned() {
+        this.status = Status.AVAILABLE;
     }
 }
