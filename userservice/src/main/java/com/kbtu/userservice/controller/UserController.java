@@ -29,4 +29,10 @@ public class UserController {
         userService.deactivateUser(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/register")
+    public ResponseEntity<UUID> register(@RequestBody @Valid CreateUserRequestDto dto) {
+        UUID id = userService.registerUser(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(id);
+    }
 }

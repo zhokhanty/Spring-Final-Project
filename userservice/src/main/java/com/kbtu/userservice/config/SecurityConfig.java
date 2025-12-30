@@ -1,5 +1,8 @@
 package com.kbtu.userservice.config;
 
+import org.keycloak.OAuth2Constants;
+import org.keycloak.admin.client.Keycloak;
+import org.keycloak.admin.client.KeycloakBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -14,18 +17,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // 1. Отключаем CSRF, так как для REST API он обычно не нужен
                 .csrf(csrf -> csrf.disable())
-
-                // 2. Разрешаем POST запросы к вашему API
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/users/**").permitAll() // Разрешить всем для тестов
+                        .requestMatchers("/api/v1/users/register").permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
                         .anyRequest().authenticated()
                 )
-
-                // 3. Настраиваем способ авторизации (например, Basic Auth для Postman/Curl)
                 .httpBasic(Customizer.withDefaults());
 
         return http.build();
     }
+
 }
