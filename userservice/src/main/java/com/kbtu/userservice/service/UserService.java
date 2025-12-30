@@ -2,8 +2,8 @@ package com.kbtu.userservice.service;
 
 import com.kbtu.userservice.controller.CreateUserRequestDto;
 import com.kbtu.userservice.exception.UserNotFoundException;
-import com.kbtu.userservice.kafka.UserCreatedEvent;
-import com.kbtu.userservice.kafka.UserEventProperties;
+//import com.kbtu.userservice.kafka.UserCreatedEvent;
+//import com.kbtu.userservice.kafka.UserEventProperties;
 import com.kbtu.userservice.model.User;
 import com.kbtu.userservice.model.UserStatus;
 import com.kbtu.userservice.repository.UserRepository;
@@ -21,7 +21,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
-    private final UserEventProperties eventProperties;
+    // private final UserEventProperties eventProperties;
 
     @Transactional
     public UUID createUser(CreateUserRequestDto dto) {
@@ -33,17 +33,17 @@ public class UserService {
 
         userRepository.save(user);
 
-        UserCreatedEvent event = new UserCreatedEvent(
-                UUID.randomUUID(),
-                user.getId(),
-                Instant.now()
-        );
+//        UserCreatedEvent event = new UserCreatedEvent(
+//                UUID.randomUUID(),
+//                user.getId(),
+//                Instant.now()
+//        );
 
-        kafkaTemplate.send(
-                eventProperties.getUserEventsTopic(),
-                user.getId().toString(),
-                event
-        );
+//        kafkaTemplate.send(
+//                eventProperties.getUserEventsTopic(),
+//                user.getId().toString(),
+//                event
+//        );
 
         return user.getId();
     }
