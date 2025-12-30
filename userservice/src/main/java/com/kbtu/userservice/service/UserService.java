@@ -2,16 +2,16 @@ package com.kbtu.userservice.service;
 
 import com.kbtu.userservice.controller.CreateUserRequestDto;
 import com.kbtu.userservice.exception.UserNotFoundException;
-//import com.kbtu.userservice.kafka.UserCreatedEvent;
-//import com.kbtu.userservice.kafka.UserEventProperties;
+import com.kbtu.userservice.kafka.UserCreatedEvent;
+import com.kbtu.userservice.kafka.UserEventProperties;
 import com.kbtu.userservice.model.User;
 import com.kbtu.userservice.model.UserStatus;
 import com.kbtu.userservice.repository.UserRepository;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
-import lombok.Value;
+import org.springframework.beans.factory.annotation.Value;
 import org.keycloak.admin.client.Keycloak;
-import org.keycloak.representations.account.UserRepresentation;
+import org.keycloak.representations.idm.UserRepresentation;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -27,10 +27,10 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
-    // private final UserEventProperties eventProperties;
-    private final Keycloak keycloak; // Инжектим бин из конфига
+    private final UserEventProperties eventProperties;
+    private final Keycloak keycloak;
 
-    @Value("${keycloak.realm}")
+    @Value("${keycloak.realm:kbtu-realm}")
     private String realm = "kbtu-realm";
 
     @Transactional
@@ -43,17 +43,17 @@ public class UserService {
 
         userRepository.save(user);
 
-//        UserCreatedEvent event = new UserCreatedEvent(
-//                UUID.randomUUID(),
-//                user.getId(),
-//                Instant.now()
-//        );
+        UserCreatedEvent event = new UserCreatedEvent(
+                UUID.randomUUID(),
+                user.getId(),
+                Instant.now()
+        );
 
-//        kafkaTemplate.send(
-//                eventProperties.getUserEventsTopic(),
-//                user.getId().toString(),
-//                event
-//        );
+        kafkaTemplate.send(
+                eventProperties.getUserEventsTopic(),
+                user.getId().toString(),
+                event
+        );
 
         return user.getId();
     }

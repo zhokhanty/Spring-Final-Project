@@ -32,7 +32,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: admin
     ports:
-      - "5433:5432"
+      - "5432:5432"
     # ИСПРАВЛЕНО: Должно быть 'volumes'
     volumes:
       - ./postgres-data:/var/lib/postgresql/data
@@ -100,3 +100,25 @@ services:
       SPRING_KAFKA_CONSUMER_GROUP_ID: notification-group-v1
     ports:
       - "8083:8083"
+  userservice:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      target: builder
+    container_name: userservice
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      keycloak:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/userservice
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: admin
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KEYCLOAK_REALM: kbtu-realm
+      KEYCLOAK_SERVER_URL: http://keycloak:8080
+    ports:
+      - "8081:8080"

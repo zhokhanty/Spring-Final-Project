@@ -14,7 +14,9 @@ RUN echo "=== Listing all directories ===" && \
     echo "=== Bookservice directory ===" && \
     ls -la /app/bookservice/ || echo "No bookservice dir" && \
     echo "=== Notification-service directory ===" && \
-    ls -la /app/notification-service/ || echo "No notification-service dir"
+    ls -la /app/notification-service/ || echo "No notification-service dir" && \
+    echo "=== User-service directory ===" && \
+        ls -la /app/userservice/ || echo "No userservice dir"
 
 # =========================================================================
 # 2. BOOKSERVICE FINAL STAGE
@@ -32,4 +34,13 @@ FROM eclipse-temurin:17-jre-focal AS notification-service-final
 WORKDIR /app
 COPY --from=builder /app/notification-service/target/*.jar app.jar
 EXPOSE 8083
+ENTRYPOINT ["java", "-jar", "app.jar"]
+
+# =========================================================================
+# 4. USERSERVICE FINAL STAGE
+# =========================================================================
+FROM eclipse-temurin:17-jre-focal AS userservice-final
+WORKDIR /app
+COPY --from=builder /app/userservice/target/*.jar app.jar
+EXPOSE 8081
 ENTRYPOINT ["java", "-jar", "app.jar"]

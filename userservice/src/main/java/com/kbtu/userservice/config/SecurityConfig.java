@@ -17,34 +17,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // 1. Отключаем CSRF, так как для REST API он обычно не нужен
                 .csrf(csrf -> csrf.disable())
-
-                // 2. Разрешаем POST запросы к вашему API
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/users/**").permitAll() // Разрешить всем для тестов
+                        .requestMatchers("/api/v1/users/register").permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
                         .anyRequest().authenticated()
                 )
-
-                // 3. Настраиваем способ авторизации (например, Basic Auth для Postman/Curl)
                 .httpBasic(Customizer.withDefaults());
 
         return http.build();
     }
 
-    @Configuration
-    public class KeycloakConfig {
-
-        @Bean
-        public Keycloak keycloak() {
-            return KeycloakBuilder.builder()
-                    .serverUrl("http://localhost:8180")
-                    .realm("master") // Админ-действия обычно через master
-                    .clientId("admin-cli")
-                    .username("admin")
-                    .password("admin")
-                    .grantType(OAuth2Constants.PASSWORD)
-                    .build();
-        }
-    }
 }
